@@ -39,8 +39,8 @@ pipeline {
                             if exist .npm-cache rmdir /s /q .npm-cache
                             type nul > .npmrc-user
                             type nul > .npmrc-global
-                            set NPM_CONFIG_USERCONFIG=%CD%\.npmrc-user
-                            set NPM_CONFIG_GLOBALCONFIG=%CD%\.npmrc-global
+                            set NPM_CONFIG_USERCONFIG=%CD%/.npmrc-user
+                            set NPM_CONFIG_GLOBALCONFIG=%CD%/.npmrc-global
                             npm install -g npm@9.9.4
                             npm install --ignore-scripts --no-audit --no-fund --no-package-lock --progress=false
                         '''
