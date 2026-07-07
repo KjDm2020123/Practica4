@@ -1,5 +1,5 @@
 # Dockerfile
-FROM node:16
+FROM node:18-alpine
 
 # Crear directorio de la aplicación
 WORKDIR /usr/src/app
@@ -9,7 +9,7 @@ COPY package*.json ./
 COPY index.js .
 
 # Instalar dependencias
-RUN npm install
+RUN npm install --no-package-lock
 
 # Copiar el resto de los archivos
 COPY users.json .       
