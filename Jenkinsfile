@@ -17,6 +17,12 @@ pipeline {
         stage('Instalar dependencias') {
             steps {
                 script {
+                    if (isUnix()) {
+                        sh 'rm -rf node_modules'
+                    } else {
+                        bat 'if exist node_modules rmdir /s /q node_modules'
+                    }
+
                     runCommand('npm install', 'npm install')
                 }
             }
