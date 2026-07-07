@@ -26,18 +26,21 @@ pipeline {
                 script {
                     if (isUnix()) {
                         sh '''
-                            export NPM_CONFIG_USERCONFIG=/dev/null
-                            export NPM_CONFIG_GLOBALCONFIG=/dev/null
                             rm -rf node_modules .npm-cache
+                            touch .npmrc-user .npmrc-global
+                            export NPM_CONFIG_USERCONFIG=$PWD/.npmrc-user
+                            export NPM_CONFIG_GLOBALCONFIG=$PWD/.npmrc-global
                             npm install -g npm@9.9.4
                             npm install --ignore-scripts --no-audit --no-fund --no-package-lock --progress=false
                         '''
                     } else {
                         bat '''
-                            set NPM_CONFIG_USERCONFIG=NUL
-                            set NPM_CONFIG_GLOBALCONFIG=NUL
                             if exist node_modules rmdir /s /q node_modules
                             if exist .npm-cache rmdir /s /q .npm-cache
+                            type nul > .npmrc-user
+                            type nul > .npmrc-global
+                            set NPM_CONFIG_USERCONFIG=%CD%\.npmrc-user
+                            set NPM_CONFIG_GLOBALCONFIG=%CD%\.npmrc-global
                             npm install -g npm@9.9.4
                             npm install --ignore-scripts --no-audit --no-fund --no-package-lock --progress=false
                         '''
