@@ -1,42 +1,60 @@
+def runCommand(String unixCommand, String windowsCommand) {
+    if (isUnix()) {
+        sh unixCommand
+    } else {
+        bat windowsCommand
+    }
+}
+
 pipeline {
     agent any
 
     tools {
-        nodejs "Node18" // Asume que tienes configurada una instalación llamada "Node18" en Jenkins
+        nodejs 'Node25'
     }
 
     stages {
         stage('Instalar dependencias') {
             steps {
-                sh 'npm install'
+                script {
+                    runCommand('npm install', 'npm install')
+                }
             }
         }
 
         stage('Ejecutar tests') {
             steps {
-                sh 'npm test'
+                script {
+                    runCommand('npm test', 'npm test')
+                }
             }
         }
 
-        stage('Construir Imagen Docker') {
-            when {
-                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
-            }
+        stage('Construir imagen Docker') {
             steps {
-                sh 'docker build -t hola-mundo-node:latest .'
+                script {
+                    runCommand('docker build -t hola-mundo-node:latest .', 'docker build -t hola-mundo-node:latest .')
+                }
             }
         }
 
-        stage('Ejecutar Contenedor Node.js') {
-            when {
-                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
-            }
+        stage('Desplegar contenedor') {
             steps {
-                sh '''
-                    docker stop hola-mundo-node || true
-                    docker rm hola-mundo-node || true
-                    docker run -d --name hola-mundo-node -p 3000:3000 hola-mundo-node:latest
-                '''
+                script {
+                    if (isUnix()) {
+                        sh '''
+                            docker stop hola-mundo-node || true
+                            docker rm hola-mundo-node || true
+                            docker run -d --name hola-mundo-node -p 3000:3000 hola-mundo-node:latest
+                        '''
+                    } else {
+                        bat '''
+                            docker stop hola-mundo-node >NUL 2>&1
+                            docker rm hola-mundo-node >NUL 2>&1
+                            docker run -d --name hola-mundo-node -p 3000:3000 hola-mundo-node:latest
+                        '''
+                    }
+                }
             }
         }
     }
