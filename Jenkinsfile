@@ -6,6 +6,14 @@ def runCommand(String unixCommand, String windowsCommand) {
     }
 }
 
+def hasDocker() {
+    if (isUnix()) {
+        return sh(script: 'command -v docker >/dev/null 2>&1', returnStatus: true) == 0
+    }
+
+    return bat(script: 'where docker >NUL 2>&1', returnStatus: true) == 0
+}
+
 pipeline {
     agent any
 
@@ -58,6 +66,9 @@ pipeline {
         }
 
         stage('Construir imagen Docker') {
+            when {
+                expression { hasDocker() }
+            }
             steps {
                 script {
                     runCommand('docker build -t hola-mundo-node:latest .', 'docker build -t hola-mundo-node:latest .')
@@ -66,6 +77,9 @@ pipeline {
         }
 
         stage('Desplegar contenedor') {
+            when {
+                expression { hasDocker() }
+            }
             steps {
                 script {
                     if (isUnix()) {
