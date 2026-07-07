@@ -1,66 +1,48 @@
-def runCommand(String unixCommand, String windowsCommand) {
-    if (isUnix()) {
-        sh unixCommand
-    } else {
-        bat windowsCommand
-    }
-}
-
 pipeline {
     agent any
 
     tools {
-        nodejs 'Node18'
+        nodejs "Node25" // Configura la instalación de Node.js
+        dockerTool 'Dockertool' // Integrado de tu primer código para que Jenkins reconozca Docker
     }
 
     stages {
         stage('Instalar dependencias') {
             steps {
-                script {
-                    if (isUnix()) {
-                        sh 'rm -rf node_modules'
-                    } else {
-                        bat 'if exist node_modules rmdir /s /q node_modules'
-                    }
-
-                    runCommand('npm install', 'npm install')
-                }
+                sh 'npm install'
             }
         }
 
         stage('Ejecutar tests') {
             steps {
-                script {
-                    runCommand('npm test', 'npm test')
-                }
+                sh 'npm test'
             }
         }
 
-        stage('Construir imagen Docker') {
+        stage('Construir Imagen Docker') {
+            when {
+                // Solo se ejecuta si los tests y la instalación fueron exitosos
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
             steps {
-                script {
-                    runCommand('docker build -t hola-mundo-node:latest .', 'docker build -t hola-mundo-node:latest .')
-                }
+                sh 'docker build -t hola-mundo-node:latest .'
             }
         }
 
-        stage('Desplegar contenedor') {
+        stage('Ejecutar Contenedor Node.js') {
+            when {
+                // Solo se ejecuta si la construcción de la imagen fue exitosa
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
             steps {
-                script {
-                    if (isUnix()) {
-                        sh '''
-                            docker stop hola-mundo-node || true
-                            docker rm hola-mundo-node || true
-                            docker run -d --name hola-mundo-node -p 3000:3000 hola-mundo-node:latest
-                        '''
-                    } else {
-                        bat '''
-                            docker stop hola-mundo-node >NUL 2>&1
-                            docker rm hola-mundo-node >NUL 2>&1
-                            docker run -d --name hola-mundo-node -p 3000:3000 hola-mundo-node:latest
-                        '''
-                    }
-                }
+                sh '''
+                    # Detener y eliminar cualquier contenedor previo
+                    docker stop hola-mundo-node || true
+                    docker rm hola-mundo-node || true
+
+                    # Ejecutar el nuevo contenedor de la aplicación
+                    docker run -d --name hola-mundo-node -p 3000:3000 hola-mundo-node:latest
+                '''
             }
         }
     }
